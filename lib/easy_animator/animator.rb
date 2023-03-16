@@ -1,13 +1,12 @@
-require_relative "easeable"
+require_relative "easings"
 
 class Animator
-  include Easeable
+  include Easings
 
-  def initialize(starting:, ending:, duration:, easing: :linear, start_offset: 0)
-    @duration = duration
-    @starting = starting
-    @start_offset = start_offset
-    @ending = ending
+  def initialize(starting:, ending:, duration:, easing: :linear)
+    @duration = duration.to_f
+    @starting = starting.to_f
+    @ending = ending.to_f
     @easing = method(easing)
     @start_time = nil
   end
@@ -20,25 +19,26 @@ class Animator
   def progress
     return 1.0 if ended?
     return 0.0 unless started?
-    (Time.now - @start_time - @start_offset) / @duration
+    (Time.now - @start_time) / @duration
   end
 
   # Current value between starting and ending
   def value
     return @ending if ended?
     return @starting unless started?
-    @easing.call(elapsed_time, starting, ending, duration)
+    @easing.call(elapsed_time, @starting, @ending - @starting, @duration)
   end
 
   # @returns [Float]
   def elapsed_time
     return duration if ended?
+    return 0.0 unless started?
+    Time.now - @start_time
   end
 
   # @returns [Boolean]
   def started?
-    return false unless @start_time
-    Time.now - @start_time >= @start_offset
+    !@start_time.nil?
   end
 
   # @returns [Boolean]
